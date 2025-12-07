@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Implementation — CI/CD & Deployment</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial;max-width:900px;margin:36px auto;padding:0 16px;color:#111}
+    h1{margin-bottom:6px}
+    pre{background:#f6f8fa;padding:12px;border-radius:6px;overflow:auto}
+    code{font-family:monospace}
+    section{margin:20px 0}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Implementation details</h1>
+    <p>This page documents how this site is built and deployed — useful to prove the pipeline is mine.</p>
+  </header>
+
+  <section>
+    <h2>Architecture</h2>
+    <p>
+      The site is a static HTML site served by Nginx inside a Docker container. CI builds a Docker image and pushes it to a registry (Docker Hub or GitHub Container Registry). The CD step pulls the new image on the server and restarts the container using an atomic `docker pull && docker rm -f && docker run` sequence to minimise downtime.
+    </p>
+  </section>
+
+  <section>
+    <h2>CI (GitHub Actions)</h2>
+    <p>
+      The workflow does:
+      <ol>
+        <li>Checkout repo</li>
+        <li>Build Docker image and tag with SHA and `latest`</li>
+        <li>Run a small smoke test (curl localhost inside a container)</li>
+        <li>Push image to container registry</li>
+        <li>SSH to the target server and deploy</li>
+      </ol>
+    </p>
+  </section>
+
+  <section>
+    <h2>Security & secrets</h2>
+    <p>
+      The deployment uses these GitHub Secrets: <code>REGISTRY</code>, <code>REGISTRY_USERNAME</code>, <code>REGISTRY_TOKEN</code>, <code>SSH_HOST</code>, <code>SSH_USER</code>, <code>SSH_KEY</code>, and <code>SSH_PORT</code>. The SSH key in GitHub Actions is stored encrypted and only used at deployment time.
+    </p>
+  </section>
+
+  <section>
+    <h2>Testing</h2>
+    <p>A smoke test curls the container's root path and checks for HTTP 200 and expected HTML title. Additional tests (linting, HTML validation) can be added to the workflow.</p>
+  </section>
+
+  <section>
+    <h2>Where to find logs</h2>
+    <p>CI logs are available in GitHub Actions. On the server the container stdout/stderr can be checked with <code>docker logs &lt;container-name&gt;</code>.</p>
+  </section>
+
+  <section>
+    <h2>Artifacts / reproducibility</h2>
+    <p>
+      The build is reproducible: the Dockerfile pins the base image and the image is tagged with the commit SHA. Add the commit SHA or CI badge in the header to prove this site was built from a specific commit.
+    </p>
+  </section>
+
+  <footer>
+    <p style="color:#666;font-size:0.9rem">If you want to verify: check the GitHub Actions run ID shown on the repo, then inspect the image tag &amp; deployment timestamp on the server.</p>
+  </footer>
+</body>
+</html>

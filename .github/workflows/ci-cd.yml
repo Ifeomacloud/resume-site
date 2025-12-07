@@ -1,0 +1,129 @@
+name: CI/CD - Build, Test, Push, Deploy
+
+on:
+  push:
+    branches: [ main, master ]
+
+env:
+  # e.g. 'docker.io/myusername' or 'ghcr.io/myusername'
+  IMAGE_NAME: ${{ secrets.REGISTRY }}/resume-site
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    outputs:
+      # Expose the specific image tag created in this job for the next job
+      image-tag: ${{ steps.set-tags.outputs.image_tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU (optional for multi-arch)
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Setup Node (only if you add JS linting)
+        run: echo "no node tasks right now"
+
+      - name: Set tags
+        id: set-tags
+        run: |
+          SHORT_SHA=${GITHUB_SHA::8}
+          IMAGE_TAG=${{ env.IMAGE_NAME }}:${SHORT_SHA}
+          LATEST_TAG=${{ env.IMAGE_NAME }}:latest
+          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
+
+      - name: Build image (local)
+        run: |
+          # Build with both the SHA tag and the 'latest' tag locally for smoke testing
+          docker build \
+            --tag ${{ steps.set-tags.outputs.image_tag }} \
+            --tag ${{ steps.set-tags.outputs.latest_tag }} .
+
+      - name: Run smoke test (container)
+        run: |
+          # Run the newly built image on a temporary port
+          docker run -d --name smoke-test -p 8081:80 ${{ steps.set-tags.outputs.image_tag }}
+          sleep 1
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/)
+          if [ "$STATUS" != "200" ]; then
+            docker logs smoke-test || true
+            docker rm -f smoke-test || true
+            echo "Smoke test failed: status $STATUS"
+            exit 1
+          fi
+          # Clean up the test container
+          docker rm -f smoke-test
+
+      - name: Log in to registry (for push)
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+
+      - name: Push image to registry (SHA + latest)
+        run: |
+          # Ensure tags are present and push them to the registry
+          docker push ${{ steps.set-tags.outputs.image_tag }}
+          docker push ${{ steps.set-tags.outputs.latest_tag }}
+
+  push-and-deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    env:
+      # Use the image tag produced by the build job
+      env:IMAGE_TAG_SHA: ${{ needs.build-and-test.outputs.image-tag }}
+
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare SSH key (ssh-agent)
+        uses: webfactory/ssh-agent@v0.8.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Copy deployment script to server (scp)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "start.sh"                     # assumes start.sh is at repo root
+          target: "/home/${{ secrets.SSH_USER }}/deploy"
+          strip_components: 0
+
+      - name: Ensure remote script is executable & run deployment
+        uses: appleboy/ssh-action@v1.0.1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -euo pipefail
+            DEPLOY_DIR="/home/${{ secrets.SSH_USER }}/deploy"
+            START_SH="${DEPLOY_DIR}/start.sh"
+            IMAGE="${{ env.IMAGE_TAG_SHA }}"
+
+            # Ensure deploy dir exists and script is executable
+            mkdir -p "${DEPLOY_DIR}"
+            if [ ! -f "${START_SH}" ]; then
+              echo "start.sh not found on server at ${START_SH}"
+              exit 1
+            fi
+            chmod +x "${START_SH}"
+
+            # Run the remote start script with the exact image tag
+            echo "Running ${START_SH} ${IMAGE}"
+            bash "${START_SH}" "${IMAGE}"
+
+      - name: Notify
+        run: echo "Deployment completed for image ${{ env.IMAGE_TAG_SHA }}"
