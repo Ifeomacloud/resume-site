@@ -44,7 +44,7 @@ jobs:
           # Full image path for the unique tag
           IMAGE="docker.io/ifeoma028/${IMAGE_REPO}:${TAG}"
           # Full image path for the 'latest' tag
-          LATEST="docker.io/ifeoma028/${IMAGE_REPO}:latest"
+          LATEST="docker.io/ifeoma028/resume-site:latest"
 
           # Set outputs for the next job
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
