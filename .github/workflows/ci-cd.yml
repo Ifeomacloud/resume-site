@@ -88,12 +88,10 @@ jobs:
             # Exit immediately if a command exits with a non-zero status
             set -euo pipefail
 
-            # Retrieve the image tag passed from the 'build-and-push' job
+            # CORRECT: Retrieve the image tag from the previous job's outputs.
             IMAGE="${{ needs.build-and-push.outputs.image }}"
 
-            # Retrieve the DEPLOY_PATH from the workflow environment.
-            # FIX: Use ${{ env.DEPLOY_PATH }} to pull the variable from the
-            # GitHub Actions context before running the script on the remote server.
+            # CORRECT: Retrieve the DEPLOY_PATH from the workflow environment.
             DEPLOY_PATH="${{ env.DEPLOY_PATH }}" 
 
             printf 'Deploying image (remote log): [%s]\n' "$IMAGE"
@@ -104,7 +102,6 @@ jobs:
             fi
 
             # Run the local start.sh script with the image tag as the first argument
-            # This script is expected to pull the image and restart the container.
             echo "Executing local deployment script: $DEPLOY_PATH"
             bash "$DEPLOY_PATH" "$IMAGE"
 
