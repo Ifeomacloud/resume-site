@@ -103,9 +103,7 @@ jobs:
           source: "start.sh" # assumes start.sh is at repo root
           target: "/home/${{ secrets.SSH_USER }}/deploy"
           strip_components: 0
-          envs: |
-         
-           IMAGE=${{ env.IMAGE_TAG_SHA }}
+          
 
       - name: Ensure remote script is executable & run deployment
         uses: appleboy/ssh-action@v1.0.1
@@ -114,6 +112,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
+          envs: |
+         
+           IMAGE=${{ env.IMAGE_TAG_SHA }}
+           
           script: |
             set -euo pipefail
             DEPLOY_DIR="/home/${{ secrets.SSH_USER }}/deploy"
