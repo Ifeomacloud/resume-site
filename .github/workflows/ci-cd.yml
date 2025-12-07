@@ -17,7 +17,7 @@ jobs:
       - id: build_image
         run: |
           # Build your Docker image
-          IMAGE_TAG="docker.io/ifeoma028/resume-site:latest"
+          IMAGE_TAG="docker.io/ifeoma028/resume-site:v1.0"
           echo "Building Docker image: $IMAGE_TAG"
           docker build -t "$IMAGE_TAG" .
 
