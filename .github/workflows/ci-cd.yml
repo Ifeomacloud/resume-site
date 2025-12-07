@@ -59,6 +59,8 @@ jobs:
           # Clean up the test container
           docker rm -f smoke-test
 
+      # --- Start of the corrected section ---
+
       - name: Log in to registry (for push)
         uses: docker/login-action@v2
         with:
@@ -66,18 +68,34 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_TOKEN }}
 
-      - name: Push image to registry (SHA + latest)
-        run: |
-          # Ensure tags are present and push them to the registry
-          docker push ${{ steps.set-tags.outputs.image_tag }}
-          docker push ${{ steps.set-tags.outputs.latest_tag }}
+      - name: Build and Push Docker Image (Replaced previous local build/separate push)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          # PUSH: true will build and push in one go, combining your last two steps
+          push: true
+          tags: |
+            ${{ steps.set-tags.outputs.image_tag }}
+            ${{ steps.set-tags.outputs.latest_tag }}
+
+      # The original separate push step is now redundant and removed, 
+      # as the build-push-action handles it with push: true.
+      # If you must use separate docker push commands, here is the corrected indentation for that:
+      # - name: Push image to registry (SHA + latest)
+      #   run: |
+      #     docker push ${{ steps.set-tags.outputs.image_tag }}
+      #     docker push ${{ steps.set-tags.outputs.latest_tag }}
+
+      # --- End of the corrected section ---
+
+  # ------------------------------------------------------------------
 
   push-and-deploy:
     needs: build-and-test
     runs-on: ubuntu-latest
     env:
       # Use the image tag produced by the build job
-      env:IMAGE_TAG_SHA: ${{ needs.build-and-test.outputs.image-tag }}
+      IMAGE_TAG_SHA: ${{ needs.build-and-test.outputs.image-tag }}
 
 
     steps:
@@ -96,7 +114,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          source: "start.sh"                     # assumes start.sh is at repo root
+          source: "start.sh" # assumes start.sh is at repo root
           target: "/home/${{ secrets.SSH_USER }}/deploy"
           strip_components: 0
 
