@@ -39,14 +39,12 @@ jobs:
 
       - name: Build image (local)
         run: |
-          # Build with both the SHA tag and the 'latest' tag locally for smoke testing
           docker build \
             --tag ${{ steps.set-tags.outputs.image_tag }} \
             --tag ${{ steps.set-tags.outputs.latest_tag }} .
 
       - name: Run smoke test (container)
         run: |
-          # Run the newly built image on a temporary port
           docker run -d --name smoke-test -p 8081:80 ${{ steps.set-tags.outputs.image_tag }}
           sleep 1
           STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/)
@@ -56,7 +54,6 @@ jobs:
             echo "Smoke test failed: status $STATUS"
             exit 1
           fi
-          # Clean up the test container
           docker rm -f smoke-test
 
       # --- Corrected Docker login and push section ---
@@ -81,7 +78,6 @@ jobs:
     needs: build-and-test
     runs-on: ubuntu-latest
     env:
-      # Use the image tag produced by the build job
       IMAGE_TAG_SHA: ${{ needs.build-and-test.outputs.image-tag }}
 
     steps:
@@ -100,10 +96,9 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          source: "start.sh" # assumes start.sh is at repo root
+          source: "start.sh"
           target: "/home/${{ secrets.SSH_USER }}/deploy"
           strip_components: 0
-          
 
       - name: Ensure remote script is executable & run deployment
         uses: appleboy/ssh-action@v1.0.1
@@ -113,14 +108,11 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           envs: |
-         
-           IMAGE=${{ env.IMAGE_TAG_SHA }}
-           
+            IMAGE=${{ env.IMAGE_TAG_SHA }}
           script: |
             set -euo pipefail
             DEPLOY_DIR="/home/${{ secrets.SSH_USER }}/deploy"
             START_SH="${DEPLOY_DIR}/start.sh"
-            IMAGE="${{ env.IMAGE_TAG_SHA }}"
 
             # Ensure deploy dir exists and script is executable
             mkdir -p "${DEPLOY_DIR}"
