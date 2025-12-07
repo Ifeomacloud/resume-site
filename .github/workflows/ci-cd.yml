@@ -1,122 +1,75 @@
-name: CI/CD Deploy (Docker Hub + SSH)
+name: Build & Deploy
 
 on:
   push:
     branches:
-      - main # deploy on main branch; change if needed
-
-env:
-  REGISTRY: docker.io
-  IMAGE_REPO: resume-site
-  DEPLOY_PATH: /home/ubuntu/deploy/start.sh
+      - main
 
 jobs:
-  
-
-  # 1. Build and Push Job: Builds the Docker image and pushes it to Docker Hub
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
-    # Define outputs to pass the generated image tag to the next job
     outputs:
-      image: ${{ steps.set-image.outputs.image }}
-      tag: ${{ steps.set-image.outputs.tag }}
-    
+      image-tag: ${{ steps.build_image.outputs.tag }}
     steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: 🛠️ Set up QEMU & buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: 🔑 Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKERHUB_USERNAME }} 
-          password: ${{ secrets.DOCKERHUB_TOKEN }} 
-
-      - name: 🏷️ Determine image tag
-        id: set-image
+      - id: build_image
         run: |
-          # Use first 7 characters of the commit SHA for a unique tag
-          SHORT_SHA=${GITHUB_SHA::7}
-          TAG="${SHORT_SHA}"
-          # Full image path for the unique tag
-          IMAGE="docker.io/ifeoma028/${IMAGE_REPO}:${TAG}"
-          # Full image path for the 'latest' tag
-          LATEST="docker.io/ifeoma028/resume-site:latest"
+          # Build your Docker image
+          IMAGE_TAG="docker.io/ifeoma028/resume-site:latest"
+          echo "Building Docker image: $IMAGE_TAG"
+          docker build -t "$IMAGE_TAG" .
 
-          # Set outputs for the next job
-          echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "image=${IMAGE}" >> $GITHUB_OUTPUT
-          echo "latest=${LATEST}" >> $GITHUB_OUTPUT
-          
-          echo "Image tags: $IMAGE, $LATEST"
+          # Push to registry (optional, uncomment if needed)
+          # docker push "$IMAGE_TAG"
 
-      - name: 🔨 Build and push image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ steps.set-image.outputs.image }}
-            ${{ steps.set-image.outputs.latest }}
+          # Export image tag as output for next job
+          echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-  
-  # 2. Deploy Job: Connects to the server via SSH and runs the deployment script
   deploy:
-    needs: build-and-push # Ensures this job runs only after the image is built and pushed
+    needs: build
     runs-on: ubuntu-latest
-    
     steps:
-      - name: 🖥️ Debug image (runner)
-        run: |
-          IMAGE="${{ needs.build-and-push.outputs.image }}"
-          echo "Deploying image: [$IMAGE]"
-          
-      - name: ☁️ Deploy to server over SSH
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          debug: true
-          
-          # The script to execute on the remote server
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
           script: |
-            # Exit immediately if a command exits with a non-zero status
+            #!/bin/bash
             set -euo pipefail
 
-            # CORRECT: Retrieve the image tag from the previous job's outputs.
-            IMAGE="${{ needs.build-and-push.outputs.image }}"
+            # Get image from previous job
+            IMAGE="${{ needs.build.outputs.image-tag }}"
+            DEPLOY_PATH="/home/ubuntu/deploy/start.sh"
 
-            # CORRECT: Retrieve the DEPLOY_PATH from the workflow environment.
-            DEPLOY_PATH="${{ env.DEPLOY_PATH }}" 
+            # Debug log
+            echo "DEBUG: Deploying image: [$IMAGE]"
 
-            printf 'Deploying image (remote log): [%s]\n' "$IMAGE"
-
+            # Fail if IMAGE is empty
             if [ -z "$IMAGE" ]; then
-              echo "ERROR: image string is empty on remote. Aborting."
+              echo "ERROR: IMAGE is empty. Aborting."
               exit 2
             fi
 
-            # Run the local start.sh script with the image tag as the first argument
-            echo "Executing local deployment script: $DEPLOY_PATH"
+            # Run deployment script
+            echo "Running deployment script: $DEPLOY_PATH"
             bash "$DEPLOY_PATH" "$IMAGE"
 
-            # Simple healthcheck loop to verify service status
+            # Healthcheck loop
             HEALTH_URL="http://127.0.0.1:80/"
             MAX_TRIES=12
             TRY=1
             until curl -fsS "$HEALTH_URL" >/dev/null 2>&1; do
               if [ "$TRY" -ge "$MAX_TRIES" ]; then
                 echo "Healthcheck failed after $TRY attempts."
-                # Output container logs on failure for debugging
                 docker logs --tail 200 resume-site || true
                 exit 10
               fi
-              printf 'Healthcheck attempt %d/%d failed — retrying 5s...\n' "$TRY" "$MAX_TRIES"
+              echo "Healthcheck attempt $TRY/$MAX_TRIES failed, retrying in 5s..."
               TRY=$((TRY+1))
               sleep 5
             done
