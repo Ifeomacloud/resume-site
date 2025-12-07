@@ -48,7 +48,7 @@ Your server should have a script at `/home/ubuntu/deploy/start.sh` that accepts 
 - Runs the new Docker container with the given image.
 - Exposes the container on port 80.
 
-Example:
+## Example:
 
 ```bash
 #!/bin/bash
@@ -57,7 +57,9 @@ docker stop resume-site || true
 docker rm resume-site || true
 docker run -d --name resume-site -p 80:80 "$IMAGE"
 
-## Setup
+```bash
+
+## Setup:
 
 1. Add your server credentials as GitHub Secrets:
 
@@ -85,6 +87,6 @@ To confirm the site is accessible from the internet, open your browser and visit
 You can also test externally using `curl`:
 
 ```bash
-curl -I http://YOUR-SERVER-IP/
+curl -I http://YOUR-SERVER-IP/  like http://3.87.224.141/
 
 A healthy response should return HTTP status 200 OK.
