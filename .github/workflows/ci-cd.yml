@@ -125,8 +125,10 @@ jobs:
             fi
             chmod +x "${START_SH}"
 
+            # Debug: show image being deployed
+            echo "Deploying image: ${IMAGE}"
+
             # Run the remote start script with the exact image tag
-            echo "Running ${START_SH} ${IMAGE}"
             bash "${START_SH}" "${IMAGE}"
 
       - name: Notify
