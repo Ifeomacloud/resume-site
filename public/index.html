@@ -4,114 +4,45 @@
   <meta charset="utf-8" />
   <title>Ifeoma Okoye — Resume</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <style>
-    /* Base styles */
     body {
-      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
       max-width: 900px;
       margin: 36px auto;
       padding: 0 16px;
       color: #111;
       line-height: 1.6;
-      background: #f9f9f9;
     }
-
     header {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      border-bottom: 2px solid #0366d6;
-      padding-bottom: 16px;
-      margin-bottom: 24px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
     }
-
-    header h1 {
-      font-size: 2.2rem;
-      margin: 0;
-      color: #0366d6;
+    h1, h2, h3 {
+      margin: 0 0 8px 0;
     }
-
-    .meta {
-      color: #555;
-      font-size: 0.95rem;
-      margin: 4px 0;
-    }
-
-    nav a {
-      margin-right: 12px;
+    a {
       color: #0366d6;
       text-decoration: none;
-      font-weight: 500;
     }
-
-    nav a:hover {
+    a:hover {
       text-decoration: underline;
     }
-
-    main {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 24px;
+    .meta {
+      color: #666;
+      font-size: 0.95rem;
     }
-
     section {
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
-
-    h2 {
-      color: #0366d6;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 4px;
-      margin-bottom: 12px;
-      font-size: 1.3rem;
-    }
-
-    h3 {
-      margin: 8px 0 4px 0;
-      font-size: 1.1rem;
-      color: #333;
-    }
-
     ul {
-      margin: 6px 0 12px 20px;
-      padding: 0;
+      margin: 8px 0;
+      padding-left: 20px;
     }
-
-    .skills ul {
-      list-style: none;
-      padding: 0;
-    }
-
-    .skills li {
-      margin-bottom: 8px;
-    }
-
-    .skill-bar {
-      background: #eee;
-      border-radius: 8px;
-      overflow: hidden;
-      height: 10px;
-      width: 100%;
-    }
-
-    .skill-level {
-      height: 10px;
-      background: #0366d6;
-    }
-
     footer {
-      text-align: center;
       color: #888;
       font-size: 0.9rem;
       margin-top: 40px;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      main {
-        grid-template-columns: 1fr;
-      }
     }
   </style>
 </head>
@@ -119,85 +50,91 @@
   <header>
     <h1>Ifeoma Okoye</h1>
     <p class="meta">
-      <i class="fa-solid fa-briefcase"></i> Cloud & DevOps Engineer — 
-      <i class="fa-solid fa-location-dot"></i> Manchester — 
-      <i class="fa-solid fa-envelope"></i> <a href="mailto:ifeomaokoyequeen@gmail.com">ifeomaokoyequeen@gmail.com</a> — 
-      <i class="fa-solid fa-phone"></i> 07778788428
+      Cloud & DevOps Engineer — Manchester — <a href="mailto:ifeomaokoyequeen@gmail.com">ifeomaokoyequeen@gmail.com</a> — 07778788428
     </p>
     <nav>
-      <a href="https://www.linkedin.com/in/ifeomaokoye" target="_blank"><i class="fab fa-linkedin"></i> LinkedIn</a>
-      <a href="https://github.com/ifeomaokoye" target="_blank"><i class="fab fa-github"></i> GitHub</a>
-      <a href="/implementation.html"><i class="fa-solid fa-code"></i> CI/CD Details</a>
+      <a href="https://www.linkedin.com/in/ifeomaokoye" target="_blank">LinkedIn</a> | 
+      <a href="https://github.com/ifeomaokoye" target="_blank">GitHub</a> | 
+      <a href="/implementation.html">Implementation & CI/CD details</a>
     </nav>
   </header>
 
   <main>
-    <!-- Left Column -->
-    <div>
-      <section>
-        <h2>Professional Summary</h2>
-        <p>
-          Proactive and results-driven Cloud & DevOps Engineer with hands-on expertise in Google Cloud Platform (GCP), Terraform, Kubernetes, and automation scripting (Bash). Experienced in designing, implementing, and optimizing scalable cloud solutions across multi-cloud environments. Adept at Infrastructure as Code (IaC), incident management, and service improvement within enterprise and public sector contexts. Passionate about leveraging automation to enhance system reliability and operational efficiency.
-        </p>
-      </section>
+    <section>
+      <h2>Professional Summary</h2>
+      <p>
+        Proactive and results-driven Cloud & DevOps Engineer with hands-on expertise in Google Cloud Platform (GCP), Terraform, Kubernetes, and automation scripting (Bash). Experienced in designing, implementing, and optimizing scalable cloud solutions across multi-cloud environments. Adept at Infrastructure as Code (IaC), incident management, and service improvement within enterprise and public sector contexts. Passionate about leveraging automation to enhance system reliability and operational efficiency. Seeking to contribute technical depth and innovation to a GCP-focused engineering team within a dynamic Managed Service Provider (MSP).
+      </p>
+    </section>
 
-      <section>
-        <h2>Professional Experience</h2>
+    <section>
+      <h2>Technical Skills</h2>
+      <ul>
+        <li><strong>Cloud Platforms:</strong> AWS, Microsoft Azure, Google Cloud Platform (GCP)</li>
+        <li><strong>Infrastructure as Code (IaC):</strong> Terraform, CloudFormation</li>
+        <li><strong>Containerization & Orchestration:</strong> Kubernetes, Docker</li>
+        <li><strong>CI/CD Pipelines:</strong> GitHub Actions</li>
+        <li><strong>Monitoring & Logging:</strong> Datadog, Prometheus, ELK Stack</li>
+        <li><strong>Networking & Security:</strong> VPC, Load Balancers, IAM, Security Groups</li>
+        <li><strong>Operating Systems:</strong> Linux (Ubuntu, CentOS), Windows</li>
+        <li><strong>Scripting & Automation:</strong> Shell scripting, Python</li>
+        <li><strong>Version Control:</strong> Git, GitHub</li>
+      </ul>
+    </section>
 
-        <h3>Cloud & DevOps Engineer — Digital Witchng</h3>
-        <p>Aug 2024 – Present | Remote</p>
-        <ul>
-          <li>Designed, deployed, and optimized multi-cloud infrastructure across GCP, AWS, and Azure, ensuring high availability and scalability.</li>
-          <li>Automated infrastructure provisioning and configuration using Terraform and Ansible, improving deployment speed by 25%.</li>
-          <li>Configured proactive monitoring and alerting using Datadog and Slack, reducing downtime by 20%.</li>
-          <li>Monitored and maintained CI/CD pipelines using GitHub Actions, achieving a 15% reduction in build and deployment time.</li>
-          <li>Supported GCP services including Compute Engine, Cloud Storage, and Cloud Monitoring, collaborating with Google support for issue resolution.</li>
-        </ul>
+    <section>
+      <h2>Professional Experience</h2>
 
-        <h3>Technical Trainer | Cloud — Divine International School</h3>
-        <p>Jan 2018 – Aug 2020 | Lagos, Nigeria</p>
-        <ul>
-          <li>Conducted engaging in-person and virtual training sessions on cloud technologies (AWS, Azure, Google Cloud).</li>
-          <li>Designed and developed technical course materials, hands-on labs, and interactive learning experiences.</li>
-          <li>Prepared learners for cloud certifications (AWS Certified Solutions Architect, Azure Fundamentals).</li>
-        </ul>
+      <h3>Cloud & DevOps Engineer — Digital Witchng</h3>
+      <p>Aug 2024 - Present | Remote</p>
+      <ul>
+        <li>Designed, deployed, and optimized multi-cloud infrastructure across GCP, AWS, and Azure, ensuring high availability and scalability.</li>
+        <li>Automated infrastructure provisioning and configuration using Terraform and Ansible, improving deployment speed by 25%.</li>
+        <li>Configured proactive monitoring and alerting using Datadog and Slack, reducing downtime by 20%.</li>
+        <li>Monitored and maintained CI/CD pipelines using GitHub Actions, achieving a 15% reduction in build and deployment time.</li>
+        <li>Supported GCP services including Compute Engine, Cloud Storage, and Cloud Monitoring, collaborating with Google support for issue resolution.</li>
+      </ul>
 
-        <h3>Customer Support Representative — FriendnPal</h3>
-        <p>Apr 2022 – Aug 2024 | Remote</p>
-        <ul>
-          <li>Provided technical support and troubleshooting to customers, ensuring a 90% satisfaction rate.</li>
-          <li>Managed and resolved client queries efficiently while maintaining confidentiality.</li>
-        </ul>
+      <h3>Technical Trainer | Cloud — Divine International School</h3>
+      <p>Jan 2018 - Aug 2020 | Lagos, Nigeria</p>
+      <ul>
+        <li>Conducted engaging in-person and virtual training sessions on cloud technologies (AWS, Azure, Google Cloud).</li>
+        <li>Designed and developed technical course materials, hands-on labs, and interactive learning experiences.</li>
+        <li>Prepared learners for cloud certifications (AWS Certified Solutions Architect, Azure Fundamentals, etc.).</li>
+      </ul>
 
-        <h3>Executive Virtual Assistant — Freelance</h3>
-        <p>Jan 2021 – Dec 2021 | Remote</p>
-        <ul>
-          <li>Oversaw executive calendar management, project tracking, and data entry with a 98% accuracy rate.</li>
-        </ul>
+      <h3>Customer Support Representative — FriendnPal</h3>
+      <p>Apr 2022 - Aug 2024 | Remote</p>
+      <ul>
+        <li>Provided technical support and troubleshooting to customers, ensuring a 90% satisfaction rate.</li>
+        <li>Managed and resolved client queries efficiently while maintaining confidentiality.</li>
+      </ul>
 
-        <section>
-          <h2>Education & Certifications</h2>
-          <ul>
-            <li><strong>B.Sc, Computer Science</strong> — Nnamdi Azikiwe University, Awka, Nigeria | July 2008</li>
-            <li><strong>Certifications:</strong> AWS Certified Cloud Practitioner, Kubernetes and Cloud Native Associate (KCNA)</li>
-          </ul>
-        </section>
-      </section>
-    </div>
+      <h3>Executive Virtual Assistant — Freelance</h3>
+      <p>Jan 2021 - Dec 2021 | Remote</p>
+      <ul>
+        <li>Oversaw executive calendar management, project tracking, and data entry with a 98% accuracy rate.</li>
+      </ul>
+    </section>
 
-    <!-- Right Column -->
-    <div>
-      <section class="skills">
-        <h2>Technical Skills</h2>
-        <ul>
-          <li>Cloud Platforms: AWS, Azure, GCP
-            <div class="skill-bar"><div class="skill-level" style="width:90%"></div></div>
-          </li>
-          <li>Infrastructure as Code: Terraform, CloudFormation
-            <div class="skill-bar"><div class="skill-level" style="width:85%"></div></div>
-          </li>
-          <li>Containerization & Orchestration: Kubernetes, Docker
-            <div class="skill-bar"><div class="skill-level" style="width:80%"></div></div>
-          </li>
-          <li>CI/CD: GitHub Actions
-            <div class="skill-bar"><div class="skill-level" style="wid
+    <section>
+      <h2>Education & Certifications</h2>
+      <ul>
+        <li><strong>Bachelor of Science, Computer Science</strong> — Nnamdi Azikiwe University, Awka, Nigeria | July 2008</li>
+        <li><strong>Certifications:</strong> AWS Certified Cloud Practitioner, Kubernetes and Cloud Native Associate (KCNA)</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Projects</h2>
+      <ul>
+        <li><a href="https://ifeomaokoye.github.io/" target="_blank">Ifeoma Okoye's Portfolio</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>Built with Docker + GitHub Actions. <a href="/implementation.html">Implementation details</a>.</p>
+  </footer>
+</body>
+</html>
