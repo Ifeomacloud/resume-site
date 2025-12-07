@@ -59,34 +59,21 @@ jobs:
           # Clean up the test container
           docker rm -f smoke-test
 
-      # --- Start of the corrected section ---
-
-      - name: Log in to registry (for push)
+      # --- Corrected Docker login and push section ---
+      - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
-          registry: ${{ secrets.REGISTRY }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_TOKEN }}
 
-      - name: Build and Push Docker Image (Replaced previous local build/separate push)
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          # PUSH: true will build and push in one go, combining your last two steps
           push: true
           tags: |
             ${{ steps.set-tags.outputs.image_tag }}
             ${{ steps.set-tags.outputs.latest_tag }}
-
-      # The original separate push step is now redundant and removed, 
-      # as the build-push-action handles it with push: true.
-      # If you must use separate docker push commands, here is the corrected indentation for that:
-      # - name: Push image to registry (SHA + latest)
-      #   run: |
-      #     docker push ${{ steps.set-tags.outputs.image_tag }}
-      #     docker push ${{ steps.set-tags.outputs.latest_tag }}
-
-      # --- End of the corrected section ---
 
   # ------------------------------------------------------------------
 
@@ -96,7 +83,6 @@ jobs:
     env:
       # Use the image tag produced by the build job
       IMAGE_TAG_SHA: ${{ needs.build-and-test.outputs.image-tag }}
-
 
     steps:
       - name: Checkout
