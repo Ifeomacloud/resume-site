@@ -2,6 +2,6 @@ version: '3.8'
 services:
   resume:
     build: .
-    image: resume-site:latest
+    image: docker.io/ifeoma028/resume-site:latest
     ports:
       - "8080:80"

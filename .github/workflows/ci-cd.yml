@@ -1,132 +1,97 @@
-name: CI/CD - Build, Test, Push, Deploy
+name: CI/CD Deploy (Docker Hub)
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main  # or change to your deployment branch
 
 env:
-  # e.g. 'docker.io/myusername' or 'ghcr.io/myusername'
-  IMAGE_NAME: ${{ secrets.REGISTRY }}/resume-site
+  REGISTRY: docker.io
+  IMAGE_REPO: resume-site
+  DEPLOY_PATH: /home/ubuntu/deploy/start.sh
 
 jobs:
-  build-and-test:
+  build-and-push:
     runs-on: ubuntu-latest
     outputs:
-      # Expose the specific image tag created in this job for the next job
-      image-tag: ${{ steps.set-tags.outputs.image_tag }}
-
+      image: ${{ steps.set-image.outputs.image }}
+      tag: ${{ steps.set-image.outputs.tag }}
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up QEMU (optional for multi-arch)
-        uses: docker/setup-qemu-action@v2
+      - name: Set up QEMU & buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Setup Node (only if you add JS linting)
-        run: echo "no node tasks right now"
-
-      - name: Set tags
-        id: set-tags
-        run: |
-          SHORT_SHA=${GITHUB_SHA::8}
-          IMAGE_TAG=${{ env.IMAGE_NAME }}:${SHORT_SHA}
-          LATEST_TAG=${{ env.IMAGE_NAME }}:latest
-          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
-          echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
-
-      - name: Build image (local)
-        run: |
-          # Build with both the SHA tag and the 'latest' tag locally for smoke testing
-          docker build \
-            --tag ${{ steps.set-tags.outputs.image_tag }} \
-            --tag ${{ steps.set-tags.outputs.latest_tag }} .
-
-      - name: Run smoke test (container)
-        run: |
-          # Run the newly built image on a temporary port
-          docker run -d --name smoke-test -p 8081:80 ${{ steps.set-tags.outputs.image_tag }}
-          sleep 1
-          STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/)
-          if [ "$STATUS" != "200" ]; then
-            docker logs smoke-test || true
-            docker rm -f smoke-test || true
-            echo "Smoke test failed: status $STATUS"
-            exit 1
-          fi
-          # Clean up the test container
-          docker rm -f smoke-test
-
-      # --- Docker login and push section ---
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_TOKEN }}
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}   # your Docker Hub username
+          password: ${{ secrets.DOCKERHUB_TOKEN }}      # Docker Hub password or PAT
 
-      - name: Build and push Docker image
+      - name: Determine image tag
+        id: set-image
+        run: |
+          SHORT_SHA=${GITHUB_SHA::7}
+          TAG="${SHORT_SHA}"
+          IMAGE="docker.io/ifeoma028/${IMAGE_REPO}:${TAG}"
+          LATEST="docker.io/ifeoma028/${IMAGE_REPO}:latest"
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "image=${IMAGE}" >> $GITHUB_OUTPUT
+          echo "latest=${LATEST}" >> $GITHUB_OUTPUT
+          echo "Image tags: $IMAGE, $LATEST"
+
+      - name: Build and push image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
-            ${{ steps.set-tags.outputs.image_tag }}
-            ${{ steps.set-tags.outputs.latest_tag }}
+            ${{ steps.set-image.outputs.image }}
+            ${{ steps.set-image.outputs.latest }}
 
-  # ------------------------------------------------------------------
-
-  push-and-deploy:
-    needs: build-and-test
+  deploy:
+    needs: build-and-push
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
-      - name: Prepare SSH key (ssh-agent)
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Copy deployment script to server (scp)
-        uses: appleboy/scp-action@v0.1.7
+      - name: Deploy to server over SSH
+        uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          source: "start.sh" # assumes start.sh is at repo root
-          target: "/home/${{ secrets.SSH_USER }}/deploy"
-          strip_components: 0
-
-      - name: Ensure remote script is executable & run deployment
-        uses: appleboy/ssh-action@v1.0.1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT }}
+          host: ${{ secrets.SSH_HOST }}         # e.g., your server IP
+          username: ${{ secrets.SSH_USER }}     # e.g., ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}   # private key for SSH_USER
+          port: ${{ secrets.SSH_PORT || 22 }}
           script: |
             set -euo pipefail
-            DEPLOY_DIR="/home/${{ secrets.SSH_USER }}/deploy"
-            START_SH="${DEPLOY_DIR}/start.sh"
-            IMAGE="${{ needs.build-and-test.outputs.image-tag }}"  # ✅ Corrected line
+            IMAGE="${{ needs.build-and-push.outputs.image }}"
+            DEPLOY_PATH="${DEPLOY_PATH}"
 
-            # Ensure deploy dir exists and script is executable
-            mkdir -p "${DEPLOY_DIR}"
-            if [ ! -f "${START_SH}" ]; then
-              echo "start.sh not found on server at ${START_SH}"
-              exit 1
+            printf 'Deploying image (remote log): [%s]\n' "$IMAGE"
+
+            if [ -z "$IMAGE" ]; then
+              echo "ERROR: image string is empty on remote. Aborting."
+              exit 2
             fi
-            chmod +x "${START_SH}"
 
-            # Debug: show image being deployed
-            echo "Deploying image: ${IMAGE}"
+            # Run the hardened start.sh with the image
+            bash "$DEPLOY_PATH" "$IMAGE"
 
-            # Run the remote start script with the exact image tag
-            bash "${START_SH}" "${IMAGE}"
+            # Optional: simple healthcheck
+            HEALTH_URL="http://127.0.0.1:80/"
+            MAX_TRIES=12
+            TRY=1
+            until curl -fsS "$HEALTH_URL" >/dev/null 2>&1; do
+              if [ "$TRY" -ge "$MAX_TRIES" ]; then
+                echo "Healthcheck failed after $TRY attempts."
+                docker logs --tail 200 resume-site || true
+                exit 10
+              fi
+              printf 'Healthcheck attempt %d/%d failed — retrying 5s...\n' "$TRY" "$MAX_TRIES"
+              TRY=$((TRY+1))
+              sleep 5
+            done
 
-      - name: Notify
-        run: echo "Deployment completed for image ${{ needs.build-and-test.outputs.image-tag }}"
+            echo "Healthcheck succeeded. Deployment complete."
