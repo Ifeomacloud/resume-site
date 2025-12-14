@@ -1,8 +1,28 @@
 # Resume Site Deployment
 
-This repository contains a personal resume website built with HTML/CSS and Docker. The site is automatically built and deployed using GitHub Actions.
+This repository contains a demo resume website built with HTML/CSS and Docker. The site is automatically built and deployed using GitHub Actions.
 
 ---
+
+
+## Project Structure
+
+```bash
+
+resume-site/
+├── .github/
+│ └── workflows/
+│ └── ci-cd.yml # GitHub Actions workflow for CI/CD
+├── docker-compose.yml # Docker Compose configuration
+├── Dockerfile # Dockerfile for building the site
+├── nginx.conf # Nginx configuration
+├── public/ # Public HTML files
+│ ├── index.html
+│ └── implementation.html
+├── README.md # Project documentation
+└── start.sh # Startup script
+
+```
 
 ## Features
 
@@ -13,6 +33,60 @@ This repository contains a personal resume website built with HTML/CSS and Docke
 - Fully CI/CD-enabled workflow.
 
 ---
+
+## Prerequisites
+
+- [Docker](https://www.docker.com/get-started)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+- (Optional) GitHub account for CI/CD
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/Ifeomacloud/resume-site.git
+cd resume-site
+```
+
+## Build the Docker image:
+
+```bash
+docker-compose build
+```
+
+## Usage
+
+Start the site using Docker Compose:
+```bash
+docker-compose up -d
+```
+
+## Open your browser and visit:
+```bash
+http://localhost
+```
+
+## Stop the site:
+```bash
+docker-compose down
+```
+
+## CI/CD
+The project includes a GitHub Actions workflow (.github/workflows/ci-cd.yml) for:
+- Building the Docker image
+
+- Running basic checks (if any)
+
+- Deploying automatically (configure secrets as needed)
+
+## Customization
+- Modify HTML files in public/ to update your resume content.
+
+- Update nginx.conf for custom server configurations.
+
+- Adjust Dockerfile or docker-compose.yml if you want to change the image or service setup.
+
 
 ## GitHub Actions Workflow
 
