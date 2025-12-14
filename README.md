@@ -130,8 +130,7 @@ IMAGE="$1"
 docker stop resume-site || true
 docker rm resume-site || true
 docker run -d --name resume-site -p 80:80 "$IMAGE"
-
-```bash
+```
 
 ## Setup:
 
@@ -162,5 +161,6 @@ You can also test externally using `curl`:
 
 ```bash
 curl -I http://YOUR-SERVER-IP/  like http://3.87.224.141/
+```
 
 A healthy response should return HTTP status 200 OK.
